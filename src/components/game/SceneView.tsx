@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Scene, Choice } from "@/data/gameData";
+import { useTypewriter } from "@/hooks/useTypewriter";
 import Icon from "@/components/ui/icon";
 
 interface SceneViewProps {
@@ -8,6 +10,15 @@ interface SceneViewProps {
 }
 
 export default function SceneView({ scene, onChoice, showResult }: SceneViewProps) {
+  const fullText = scene.text;
+  const { displayed, done, skip } = useTypewriter(fullText, 22);
+
+  // При смене сцены — сброс происходит автоматически в хуке
+  useEffect(() => {}, [scene.id]);
+
+  const paragraphs = displayed.split("\n\n");
+  const fullParagraphs = fullText.split("\n\n");
+
   return (
     <div className="animate-fade-in">
       {/* Chapter label */}
@@ -37,20 +48,40 @@ export default function SceneView({ scene, onChoice, showResult }: SceneViewProp
         {scene.title}
       </h2>
 
-      {/* Story text */}
-      <div className="mb-6">
-        {scene.text.split("\n\n").map((paragraph, i) => (
-          <p
-            key={i}
-            className="text-parchment/80 text-[17px] leading-relaxed font-display mb-3 last:mb-0"
-          >
-            {paragraph}
+      {/* Story text with typewriter */}
+      <div
+        className="mb-6 cursor-pointer select-none"
+        onClick={!done ? skip : undefined}
+        title={!done ? "Нажми, чтобы пропустить" : undefined}
+      >
+        {fullParagraphs.map((_, i) => {
+          const para = paragraphs[i] ?? "";
+          const isLast = i === paragraphs.length - 1;
+          const isFullyTyped = i < paragraphs.length - 1;
+
+          return (
+            <p
+              key={i}
+              className="text-parchment/80 text-[17px] leading-relaxed font-display mb-3 last:mb-0 min-h-[1.5em]"
+            >
+              {isFullyTyped ? fullParagraphs[i] : para}
+              {isLast && !done && (
+                <span className="inline-block w-0.5 h-4 bg-gold/70 ml-0.5 align-middle animate-flicker" />
+              )}
+            </p>
+          );
+        })}
+
+        {/* Skip hint */}
+        {!done && (
+          <p className="text-white/20 text-[10px] font-title tracking-widest uppercase mt-3">
+            Нажми, чтобы пропустить
           </p>
-        ))}
+        )}
       </div>
 
-      {/* Choices */}
-      {!showResult && scene.choices.length > 0 && (
+      {/* Choices — показываем только когда текст дописан */}
+      {done && !showResult && scene.choices.length > 0 && (
         <div className="space-y-3 animate-slide-up">
           {scene.choices.length > 1 && (
             <div className="flex items-center gap-2 mb-2">
@@ -74,9 +105,7 @@ export default function SceneView({ scene, onChoice, showResult }: SceneViewProp
         </div>
       )}
 
-      {showResult && (
-        <div className="h-32" />
-      )}
+      {showResult && <div className="h-32" />}
     </div>
   );
 }
