@@ -3,19 +3,27 @@ import { IMAGES } from "@/data/gameData";
 
 interface TitleScreenProps {
   onStart: () => void;
+  onPlayTitle: () => void;
+  onStopTitle: () => void;
 }
 
-export default function TitleScreen({ onStart }: TitleScreenProps) {
+export default function TitleScreen({ onStart, onPlayTitle, onStopTitle }: TitleScreenProps) {
   const [visible, setVisible] = useState(false);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(t);
-  }, []);
+    // Запускаем музыку после первого взаимодействия пользователя — через задержку
+    const m = setTimeout(() => onPlayTitle(), 400);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(m);
+    };
+  }, [onPlayTitle]);
 
   const handleStart = () => {
     setStarting(true);
+    onStopTitle();
     setTimeout(onStart, 900);
   };
 

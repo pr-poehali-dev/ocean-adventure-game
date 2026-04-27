@@ -10,6 +10,8 @@ const TRACKS: Record<string, string> = {
     "https://cdn.freesound.org/previews/478/478687_10543393-lq.mp3",
   ambience_storm:
     "https://cdn.freesound.org/previews/361/361816_6436898-lq.mp3",
+  title:
+    "https://cdn.freesound.org/previews/612/612095_5674468-lq.mp3",
 };
 
 const SFX: Record<string, string> = {
@@ -116,5 +118,37 @@ export function useAudio() {
     };
   }, []);
 
-  return { muted, volume, toggleMute, changeVolume, playAmbience, playSfx };
+  const playTitle = useCallback(() => {
+    if (currentTrackKey.current === "title") return;
+
+    if (currentBgRef.current) {
+      const old = currentBgRef.current;
+      old.fade(volume, 0, 800);
+      setTimeout(() => old.stop(), 900);
+    }
+
+    currentTrackKey.current = "title";
+    const howl = new Howl({
+      src: [TRACKS.title],
+      loop: true,
+      volume: 0,
+      html5: true,
+    });
+
+    howl.play();
+    howl.fade(0, volume * 0.7, 2000);
+    currentBgRef.current = howl;
+  }, [volume]);
+
+  const stopTitle = useCallback(() => {
+    if (currentTrackKey.current === "title" && currentBgRef.current) {
+      const old = currentBgRef.current;
+      old.fade(volume * 0.7, 0, 1200);
+      setTimeout(() => old.stop(), 1300);
+      currentBgRef.current = null;
+      currentTrackKey.current = "";
+    }
+  }, [volume]);
+
+  return { muted, volume, toggleMute, changeVolume, playAmbience, playSfx, playTitle, stopTitle };
 }

@@ -22,7 +22,7 @@ export default function Index() {
     restartGame,
   } = useGameState();
 
-  const { muted, volume, toggleMute, changeVolume, playAmbience, playSfx } =
+  const { muted, volume, toggleMute, changeVolume, playAmbience, playSfx, playTitle, stopTitle } =
     useAudio();
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Index() {
   };
 
   if (!gameStarted) {
-    return <TitleScreen onStart={handleStart} />;
+    return <TitleScreen onStart={handleStart} onPlayTitle={playTitle} onStopTitle={stopTitle} />;
   }
 
   const isEnding = state.isGameOver || state.isVictory;
