@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGameState } from "@/hooks/useGameState";
 import { useAudio } from "@/hooks/useAudio";
+import { SCENES } from "@/data/gameData";
 import StatsPanel from "@/components/game/StatsPanel";
 import SceneView from "@/components/game/SceneView";
 import ResultOverlay from "@/components/game/ResultOverlay";
@@ -20,6 +21,8 @@ export default function Index() {
     continueToNext,
     toggleJournal,
     restartGame,
+    markStarted,
+    hasSave,
   } = useGameState();
 
   const { muted, volume, toggleMute, changeVolume, playAmbience, playSfx, playTitle, stopTitle } =
@@ -32,6 +35,13 @@ export default function Index() {
   }, [state.currentSceneId, playAmbience, gameStarted]);
 
   const handleStart = () => {
+    restartGame();
+    markStarted();
+    setGameStarted(true);
+  };
+
+  const handleContinueSave = () => {
+    markStarted();
     setGameStarted(true);
   };
 
@@ -45,13 +55,26 @@ export default function Index() {
     makeChoice(choice);
   };
 
-  const handleContinue = () => {
+  const handleContinueResult = () => {
     playSfx("page_turn");
     continueToNext();
   };
 
+  const saveChapter = hasSave
+    ? SCENES[state.currentSceneId]?.chapter
+    : undefined;
+
   if (!gameStarted) {
-    return <TitleScreen onStart={handleStart} onPlayTitle={playTitle} onStopTitle={stopTitle} />;
+    return (
+      <TitleScreen
+        onStart={handleStart}
+        onContinue={handleContinueSave}
+        onPlayTitle={playTitle}
+        onStopTitle={stopTitle}
+        hasSave={hasSave}
+        saveChapter={saveChapter}
+      />
+    );
   }
 
   const isEnding = state.isGameOver || state.isVictory;
@@ -114,14 +137,12 @@ export default function Index() {
 
       {/* Main layout */}
       <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
-        {/* Stats sidebar */}
         <aside className="lg:w-56 shrink-0">
           <div className="lg:sticky lg:top-20">
             <StatsPanel stats={state.stats} />
           </div>
         </aside>
 
-        {/* Scene content */}
         <main className="flex-1 min-w-0 pb-32">
           {currentScene && (
             <SceneView
@@ -133,12 +154,10 @@ export default function Index() {
         </main>
       </div>
 
-      {/* Result overlay */}
       {state.showResult && (
-        <ResultOverlay result={state.lastResult} onContinue={handleContinue} />
+        <ResultOverlay result={state.lastResult} onContinue={handleContinueResult} />
       )}
 
-      {/* Journal */}
       {state.showJournal && (
         <JournalPanel entries={state.journal} onClose={toggleJournal} />
       )}
