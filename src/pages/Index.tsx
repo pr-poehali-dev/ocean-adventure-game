@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useGameState } from "@/hooks/useGameState";
 import { useAudio } from "@/hooks/useAudio";
 import StatsPanel from "@/components/game/StatsPanel";
@@ -7,9 +7,12 @@ import ResultOverlay from "@/components/game/ResultOverlay";
 import JournalPanel from "@/components/game/JournalPanel";
 import EndingScreen from "@/components/game/EndingScreen";
 import AudioControls from "@/components/game/AudioControls";
+import TitleScreen from "@/components/game/TitleScreen";
 import Icon from "@/components/ui/icon";
 
 export default function Index() {
+  const [gameStarted, setGameStarted] = useState(false);
+
   const {
     state,
     currentScene,
@@ -23,10 +26,19 @@ export default function Index() {
     useAudio();
 
   useEffect(() => {
-    if (state.currentSceneId) {
+    if (gameStarted && state.currentSceneId) {
       playAmbience(state.currentSceneId);
     }
-  }, [state.currentSceneId, playAmbience]);
+  }, [state.currentSceneId, playAmbience, gameStarted]);
+
+  const handleStart = () => {
+    setGameStarted(true);
+  };
+
+  const handleRestart = () => {
+    restartGame();
+    setGameStarted(false);
+  };
 
   const handleChoice = (choice: Parameters<typeof makeChoice>[0]) => {
     playSfx("choice_click");
@@ -37,6 +49,10 @@ export default function Index() {
     playSfx("page_turn");
     continueToNext();
   };
+
+  if (!gameStarted) {
+    return <TitleScreen onStart={handleStart} />;
+  }
 
   const isEnding = state.isGameOver || state.isVictory;
 
@@ -51,7 +67,7 @@ export default function Index() {
           sceneTitle={currentScene.title}
           sceneText={currentScene.text}
           sceneImage={currentScene.image}
-          onRestart={restartGame}
+          onRestart={handleRestart}
           onJournal={toggleJournal}
         />
         {state.showJournal && (
