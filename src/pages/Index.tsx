@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import { useGameState } from "@/hooks/useGameState";
+import { useAudio } from "@/hooks/useAudio";
 import StatsPanel from "@/components/game/StatsPanel";
 import SceneView from "@/components/game/SceneView";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import JournalPanel from "@/components/game/JournalPanel";
 import EndingScreen from "@/components/game/EndingScreen";
+import AudioControls from "@/components/game/AudioControls";
 import Icon from "@/components/ui/icon";
 
 export default function Index() {
@@ -15,6 +18,25 @@ export default function Index() {
     toggleJournal,
     restartGame,
   } = useGameState();
+
+  const { muted, volume, toggleMute, changeVolume, playAmbience, playSfx } =
+    useAudio();
+
+  useEffect(() => {
+    if (state.currentSceneId) {
+      playAmbience(state.currentSceneId);
+    }
+  }, [state.currentSceneId, playAmbience]);
+
+  const handleChoice = (choice: Parameters<typeof makeChoice>[0]) => {
+    playSfx("choice_click");
+    makeChoice(choice);
+  };
+
+  const handleContinue = () => {
+    playSfx("page_turn");
+    continueToNext();
+  };
 
   const isEnding = state.isGameOver || state.isVictory;
 
@@ -50,16 +72,27 @@ export default function Index() {
               Одиссея: Путь домой
             </span>
           </div>
-          <button
-            onClick={toggleJournal}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-parchment/50 hover:text-gold transition-colors border border-white/5 hover:border-gold/30 text-xs font-title tracking-wider uppercase"
-          >
-            <Icon name="BookOpen" size={13} />
-            Журнал
-            {state.journal.length > 0 && (
-              <span className="ml-1 text-gold/60">{state.journal.length}</span>
-            )}
-          </button>
+
+          <div className="flex items-center gap-3">
+            <AudioControls
+              muted={muted}
+              volume={volume}
+              onToggleMute={toggleMute}
+              onVolumeChange={changeVolume}
+            />
+            <button
+              onClick={toggleJournal}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-parchment/50 hover:text-gold transition-colors border border-white/5 hover:border-gold/30 text-xs font-title tracking-wider uppercase"
+            >
+              <Icon name="BookOpen" size={13} />
+              Журнал
+              {state.journal.length > 0 && (
+                <span className="ml-1 text-gold/60">
+                  {state.journal.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -77,7 +110,7 @@ export default function Index() {
           {currentScene && (
             <SceneView
               scene={currentScene}
-              onChoice={makeChoice}
+              onChoice={handleChoice}
               showResult={state.showResult}
             />
           )}
@@ -86,10 +119,7 @@ export default function Index() {
 
       {/* Result overlay */}
       {state.showResult && (
-        <ResultOverlay
-          result={state.lastResult}
-          onContinue={continueToNext}
-        />
+        <ResultOverlay result={state.lastResult} onContinue={handleContinue} />
       )}
 
       {/* Journal */}
